@@ -34,18 +34,22 @@ jobs:
     #     kind create cluster --kubeconfig --wait 5m
     #     kubectl cluster-info --context kind-kind
 
-    # - name: Creating cluster
-    #   run: |
-    #     GO111MODULE=on 
-    #     docker version
-    #     curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-$(uname)-amd64
-    #     chmod +x ./kind
-    #     sudo mv ./kind /usr/local/bin/kind
-    #     kind version
-    #     kind create cluster --loglevel debug
+    - uses: actions/checkout@v2
 
-    - name: Create k8s Kind Cluster
-      uses: helm/kind-action@v1.0.0-rc.1        
+    - name: Creating cluster
+      run: |
+        GO111MODULE=on 
+        docker version
+        curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-$(uname)-amd64
+        chmod +x ./kind
+        sudo mv ./kind /usr/local/bin/kind
+        kind version
+        kind create cluster --config=config.yaml
+        sleep 60
+
+
+    # - name: Create k8s Kind Cluster
+    #   uses: helm/kind-action@v1.0.0-rc.1        
             
     - name: Getting Nodes
       run: |
@@ -56,28 +60,25 @@ jobs:
         kubectl run nginx --image=nginx
 
     - name: Set config
-      run: echo ::set-env name=kubeconfig::$(base64 ~/.kube/config)
-      id: config
+      run: echo ::set-env name=KUBE_CONFIG_DATA::$(base64 -w 0 ~/.kube/config)
 
-    # - name: Getting the value of udit
-    #   run : echo "$KUBE_CONFIG_DATA"
-
-    - name: Running container kill chaos experiment
-      uses: uditgaurav/kubernetes-chaos@master
+    - name: Running Litmus pod delete chaos experiment
+      uses: mayadata-io/github-chaos-actions@v0.1.0
       env:
-        KUBE_CONFIG_DATA: ${{ steps.config.outputs.kubeconfig }}
         ##If litmus is not installed
         INSTALL_LITMUS: true
         ##Give application info under chaos
         APP_NS: default
         APP_LABEL: run=nginx
         APP_KIND: deployment
-        EXPERIMENT_NAME: container-kill
-        ##Custom images can also be used
+        EXPERIMENT_NAME: pod-delete
+        ##Custom image can also been used
         EXPERIMENT_IMAGE: litmuschaos/ansible-runner:latest        
-        TARGET_CONTAINER: nginx
-        TOTAL_CHAOS_DURATION: 20
+        TOTAL_CHAOS_DURATION: 30
         CHAOS_INTERVAL: 10
+        FORCE: false
+        ##Select true if you want to uninstall litmus after chaos
+        LITMUS_CLEANUP: true
 
 
     # - name: Running disk-fill chaos experiment
