@@ -67,7 +67,7 @@ jobs:
     
     - name: Getting kubeconfig
       run: |
-        kubectl view config 
+        kubectl config view
 
     - name: Running Litmus pod delete chaos experiment
       uses: mayadata-io/github-chaos-actions@v0.1.0
