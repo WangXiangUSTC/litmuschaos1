@@ -61,6 +61,10 @@ jobs:
 
     - name: Set config
       run: echo ::set-env name=KUBE_CONFIG_DATA::$(base64 -w 0 ~/.kube/config)
+    
+    - name: Getting kubeconfig
+      run: |
+        kubectl view config 
 
     - name: Running Litmus pod delete chaos experiment
       uses: mayadata-io/github-chaos-actions@v0.1.0
